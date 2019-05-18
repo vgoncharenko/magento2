@@ -54,11 +54,13 @@ steps:
     sudo update-alternatives --set phar.phar /usr/bin/phar.phar$(phpVersion)
     which composer
     sudo apt update
-    sudo apt install php72-mcrypt
+    sudo apt install php-dev libmcrypt-dev php-pear
     php -version
   displayName: 'Use PHP version $(phpVersion)'
 
-- script: composer install --no-interaction --prefer-dist
+- script: |
+    php -version
+    php /usr/bin/composer install --no-interaction --prefer-dist
   displayName: 'composer install'
 
 - task: HelmDeploy@0
