@@ -40,7 +40,7 @@ spec:
       - name: code
         gitRepo:
           repository: "https://github.com/vgoncharenko/magento2.git"
-          revision: master
+          revision: 2.3
           directory: .
 ---
 apiVersion: apps/v1
@@ -80,5 +80,5 @@ spec:
       - name: code
         gitRepo:
           repository: "https://github.com/vgoncharenko/magento2.git"
-          revision: master
+          revision: 2.3
           directory: .
