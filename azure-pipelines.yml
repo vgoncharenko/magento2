@@ -1,0 +1,88 @@
+# PHP
+# Test and package your PHP project.
+# Add steps that run tests, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/php
+
+trigger:
+- master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  phpVersion: 7.2
+
+steps:
+#- script: composer install --no-interaction --prefer-dist
+#  displayName: 'composer install'
+
+- task: KubectlInstaller@0
+  inputs:
+    kubectlVersion: 'latest'
+
+- task: Kubernetes@1
+  displayName: 'Create nginx configMap'
+  inputs:
+    connectionType: 'Azure Resource Manager'
+    azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
+    azureResourceGroup: 'Trial'
+    kubernetesCluster: 'magento22'
+    configMapName: 'nginx-config'
+    forceUpdateConfigMap: true
+    useConfigMapFile: true
+    configMapFile: 'docker/images/web/magento.conf'
+
+- task: HelmInstaller@1
+  inputs:
+    helmVersionToInstall: 'latest'
+
+- task: HelmDeploy@0
+  displayName: 'Helm init'
+  inputs:
+    connectionType: 'Azure Resource Manager'
+    azureSubscription: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
+    azureResourceGroup: 'Trial'
+    kubernetesCluster: 'magento22'
+    command: 'init'
+    canaryImage: true
+
+- script: |
+    sudo update-alternatives --set php /usr/bin/php$(phpVersion)
+    sudo update-alternatives --set phar /usr/bin/phar$(phpVersion)
+    sudo update-alternatives --set phpdbg /usr/bin/phpdbg$(phpVersion)
+    sudo update-alternatives --set php-cgi /usr/bin/php-cgi$(phpVersion)
+    sudo update-alternatives --set phar.phar /usr/bin/phar.phar$(phpVersion)
+    sudo apt install php72-mcrypt
+    php -version
+  displayName: 'Use PHP version $(phpVersion)'
+
+- script: composer install --no-interaction --prefer-dist
+  displayName: 'composer install'
+
+- task: HelmDeploy@0
+  displayName: 'Helm package'
+  inputs:
+    connectionType: 'Azure Resource Manager'
+    azureSubscription: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
+    azureResourceGroup: 'Trial'
+    kubernetesCluster: 'magento22'
+    command: 'package'
+    chartType: 'Name'
+    chartName: 'magento2-helm'
+
+- script: az acr helm push --name {{.registryName}} --subscription "Free Trial" --resource-group trial --username {{.registryLogin}} --password {{.registryPassword}}
+  displayName: 'push package'
+
+# - task: HelmDeploy@0
+#   displayName: 'Helm upgrade'
+#   inputs:
+#     connectionType: 'Azure Resource Manager'
+#     azureSubscription: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
+#     azureResourceGroup: 'Trial'
+#     kubernetesCluster: 'magento22'
+#     command: 'upgrade'
+#     arguments: '--install --cleanup-on-fail --force'
+#     chartType: 'Name'
+#     chartName: 'magento2-helm'
+#     recreate: true
+#     resetValues: true

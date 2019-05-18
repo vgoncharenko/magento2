@@ -1,0 +1,35 @@
+version: '3.3'
+
+services:
+  web:
+    container_name: web
+    image: docker.io/lord723518/magento-web:1.0.0
+    ports:
+      - "8085:81"
+    build:
+      context: ./../
+      dockerfile: docker/images/web/Dockerfile
+    depends_on:
+      - php
+    networks:
+      - web
+    volumes:
+      - ./../:/magento2ce
+  php:
+    container_name: php
+    image: docker.io/lord723518/magento-php:1.0.0
+    build:
+      context: ./../
+      dockerfile: docker/images/php/Dockerfile
+    networks:
+      - web
+    volumes:
+      - ./../:/magento2ce
+
+volumes:
+  db_data:
+  code:
+
+networks:
+  web:
+  db:

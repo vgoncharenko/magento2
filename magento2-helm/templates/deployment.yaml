@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  labels:
+    app: web
+spec:
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+        role: node1
+        tier: web
+    spec:
+      securityContext:
+        fsGroup: 2000
+      containers:
+      - name: magento2-web
+        image: gonchare.azurecr.io/nginx:latest
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "10m"
+        ports:
+        - containerPort: 8087
+        volumeMounts:
+        - name: code
+          mountPath: /magento2ce
+          readOnly: false
+        - name: nginx-config
+          mountPath: /etc/nginx/conf.d/magento.conf
+          subPath: magento.conf
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: nginx-config
+      - name: code
+        gitRepo:
+          repository: "https://github.com/vgoncharenko/magento2.git"
+          revision: master
+          directory: .
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: php
+  labels:
+    app: php
+spec:
+  selector:
+    matchLabels:
+      app: php
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: php
+        role: node1
+        tier: php
+    spec:
+      securityContext:
+        fsGroup: 2000
+      containers:
+      - name: magento2-php
+        image: gonchare.azurecr.io/php:7.2
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "10m"
+        ports:
+        - containerPort: 9000
+        volumeMounts:
+        - name: code
+          mountPath: /magento2ce
+          readOnly: false
+      volumes:
+      - name: code
+        gitRepo:
+          repository: "https://github.com/vgoncharenko/magento2.git"
+          revision: master
+          directory: .
