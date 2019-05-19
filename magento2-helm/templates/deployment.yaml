@@ -67,10 +67,17 @@ spec:
         tier: php
     spec:
       securityContext:
-        fsGroup: 2000
+        fsGroup: 1000
       containers:
       - name: magento2-php
         image: gonchare.azurecr.io/php:7.2
+        securityContext:
+          privileged: true
+          runAsUser: 1000
+          capabilities:
+            add:
+            - IPC_LOCK
+            - SYS_RESOURCE
         resources:
           limits:
             memory: "128Mi"
@@ -91,7 +98,6 @@ kind: Deployment
 metadata:
   name: esnode
 spec:
-  serviceName: elasticsearch
   replicas: 2
   updateStrategy:
     type: RollingUpdate
@@ -112,8 +118,8 @@ spec:
       containers:
       - name: elasticsearch
         resources:
-            requests:
-                memory: 1Gi
+          requests:
+            memory: "100Mi"
         securityContext:
           privileged: true
           runAsUser: 1000
@@ -125,9 +131,9 @@ spec:
         env:
         - name: ES_JAVA_OPTS
           valueFrom:
-              configMapKeyRef:
-                  name: es-config
-                  key: ES_JAVA_OPTS
+            configMapKeyRef:
+              name: es-config
+              key: ES_JAVA_OPTS
         readinessProbe:
           httpGet:
             scheme: HTTP
@@ -149,6 +155,9 @@ spec:
       - name: elasticsearch-config
         configMap:
           name: es-config
+          items:
+          - key: elasticsearch.yml
+            path: elasticsearch.yml
       - name: es-data
         persistentVolumeClaim:
           claimName: es-data
