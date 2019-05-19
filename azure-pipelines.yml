@@ -87,7 +87,8 @@ steps:
 - task: AzureCLI@1
   displayName: 'Copy code to Azure File Storage'
   inputs:
-    azureSubscription: 'azureFileStorage'
+    # azureSubscription: 'azureFileStorage'
+    azureSubscription: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
     scriptLocation: 'inlineScript'
     inlineScript: 'az storage file upload --share-name magento.zip --source $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip --connection-string {{.azureFileStorageConnectionString}}'
 
