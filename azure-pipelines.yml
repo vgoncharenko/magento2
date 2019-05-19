@@ -84,16 +84,16 @@ steps:
     archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
     replaceExistingArchive: true
 
-- task: AzureCLI@1
-  displayName: 'Copy code to Azure File Storage'
-  inputs:
-    # azureSubscription: 'azureFileStorage'
-    azureSubscription: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
-    scriptLocation: 'inlineScript'
-    inlineScript: 'az storage file upload --share-name magento.zip --source $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip --connection-string {{.azureFileStorageConnectionString}}'
+# - task: AzureCLI@1
+#   displayName: 'Copy code to Azure File Storage'
+#   inputs:
+#     # azureSubscription: 'azureFileStorage'
+#     azureSubscription: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
+#     scriptLocation: 'inlineScript'
+#     inlineScript: 'az storage file upload --share-name magento.zip --source $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip --connection-string {{.azureFileStorageConnectionString}}'
 
 - task: Kubernetes@1
-  displayName: 'Provision deployment node'
+  displayName: 'Provision deployment pod'
   inputs:
     connectionType: 'Azure Resource Manager'
     azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
@@ -103,6 +103,17 @@ steps:
     arguments: '-f k8s-config/deployment-done.yaml'
 
 - task: Kubernetes@1
+  displayName: 'Copy code in deployment pod'
+  inputs:
+    connectionType: 'Azure Resource Manager'
+    azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
+    azureResourceGroup: 'Trial'
+    kubernetesCluster: 'magento22'
+    command: 'cp'
+    arguments: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip $(kubectl get pods -o=name -l app=code | sed "s/^.\{4\}//"):/magento.zip'
+
+
+- task: Kubernetes@1
   displayName: 'Unarchive code in pod'
   inputs:
     connectionType: 'Azure Resource Manager'
@@ -110,7 +121,7 @@ steps:
     azureResourceGroup: 'Trial'
     kubernetesCluster: 'magento22'
     command: 'exec'
-    arguments: '-it $(kubectl get pods -o=name -l app=code | sed "s/^.\{4\}//") tar -xzf /magento2ce/magento.zip'
+    arguments: '-it $(kubectl get pods -o=name -l app=code | sed "s/^.\{4\}//") tar -xzf /magento.zip -C /magento2ce'
 
 - task: Kubernetes@1
   displayName: 'Remove archive'
@@ -120,7 +131,7 @@ steps:
     azureResourceGroup: 'Trial'
     kubernetesCluster: 'magento22'
     command: 'exec'
-    arguments: '-it $(kubectl get pods -o=name -l app=code | sed "s/^.\{4\}//") rm /magento2ce/magento.zip'
+    arguments: '-it $(kubectl get pods -o=name -l app=code | sed "s/^.\{4\}//") rm /magento.zip'
 
 - task: Kubernetes@1
   displayName: 'Composer install'
