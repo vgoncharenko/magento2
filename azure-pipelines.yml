@@ -84,11 +84,6 @@ steps:
     archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
     replaceExistingArchive: true
 
-- task: AzureFileCopy@2
-  inputs:
-    SourcePath: 'aaa'
-    Destination: 'AzureBlob'
-
 - task: AzureCLI@1
   displayName: 'Copy code to Azure File Storage'
   inputs:
