@@ -100,7 +100,7 @@ steps:
     azureResourceGroup: 'Trial'
     kubernetesCluster: 'magento22'
     command: 'apply'
-    arguments: '-f k8s-config/deployment-done.yaml'
+    arguments: '-f k8s-config/deployment-pod.yaml'
 
 - task: Kubernetes@1
   displayName: 'Copy code in deployment pod'
