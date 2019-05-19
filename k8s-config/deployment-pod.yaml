@@ -14,6 +14,12 @@ spec:
     - name: code
       mountPath: /magento2ce
       readOnly: false
+    - name: code-changes-apply
+      mountPath: /etc/scripts
+      subPath: apply_changes.sh
+    - name: install-magento
+      mountPath: /etc/scripts
+      subPath: install_magento.sh
   volumes:
   - name: code
     persistentVolumeClaim:

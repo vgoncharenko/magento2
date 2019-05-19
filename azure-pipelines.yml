@@ -32,6 +32,30 @@ steps:
     useConfigMapFile: true
     configMapFile: 'docker/images/web/magento.conf'
 
+- task: Kubernetes@1
+  displayName: 'Create code changes apply file'
+  inputs:
+    connectionType: 'Azure Resource Manager'
+    azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
+    azureResourceGroup: 'Trial'
+    kubernetesCluster: 'magento22'
+    configMapName: 'code-changes-apply'
+    forceUpdateConfigMap: true
+    useConfigMapFile: true
+    configMapFile: 'k8s-config/scripts/apply_changes.sh'
+
+- task: Kubernetes@1
+  displayName: 'Create magento install file'
+  inputs:
+    connectionType: 'Azure Resource Manager'
+    azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
+    azureResourceGroup: 'Trial'
+    kubernetesCluster: 'magento22'
+    configMapName: 'install-magento'
+    forceUpdateConfigMap: true
+    useConfigMapFile: true
+    configMapFile: 'k8s-config/scripts/install_magento.sh'
+
 - task: HelmInstaller@1
   inputs:
     helmVersionToInstall: 'latest'
@@ -100,7 +124,7 @@ steps:
     azureResourceGroup: 'Trial'
     kubernetesCluster: 'magento22'
     command: 'apply'
-    arguments: '-f k8s-config/deployment-pod.yaml'
+    arguments: '-f k8s-config/deployment-pod.yaml --wait true'
 
 - task: Kubernetes@1
   displayName: 'Copy code in deployment pod'
@@ -113,44 +137,14 @@ steps:
     arguments: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip code:/magento.zip'
 
 - task: Kubernetes@1
-  displayName: 'Delete old code'
+  displayName: 'Apply code changes'
   inputs:
     connectionType: 'Azure Resource Manager'
     azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
     azureResourceGroup: 'Trial'
     kubernetesCluster: 'magento22'
     command: 'exec'
-    arguments: '-it code rm -rf /magento2ce/*'
-
-- task: Kubernetes@1
-  displayName: 'Unarchive code in pod'
-  inputs:
-    connectionType: 'Azure Resource Manager'
-    azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
-    azureResourceGroup: 'Trial'
-    kubernetesCluster: 'magento22'
-    command: 'exec'
-    arguments: '-it code tar -xzf /magento.zip -C /magento2ce'
-
-- task: Kubernetes@1
-  displayName: 'Remove archive'
-  inputs:
-    connectionType: 'Azure Resource Manager'
-    azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
-    azureResourceGroup: 'Trial'
-    kubernetesCluster: 'magento22'
-    command: 'exec'
-    arguments: '-it code rm /magento.zip'
-
-- task: Kubernetes@1
-  displayName: 'Composer install'
-  inputs:
-    connectionType: 'Azure Resource Manager'
-    azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
-    azureResourceGroup: 'Trial'
-    kubernetesCluster: 'magento22'
-    command: 'exec'
-    arguments: '-it $(kubectl get pods -o=name -l app=code | sed "s/^.\{4\}//") $(cd /magento2ce && composer install)'
+    arguments: '-it code bash /etc/scripts/apply_changes.sh'
 
 - task: HelmDeploy@0
   displayName: 'Helm upgrade'
@@ -165,3 +159,13 @@ steps:
     chartName: 'magento2-helm'
     recreate: true
     resetValues: true
+
+- task: Kubernetes@1
+  displayName: 'Install Magento'
+  inputs:
+    connectionType: 'Azure Resource Manager'
+    azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
+    azureResourceGroup: 'Trial'
+    kubernetesCluster: 'magento22'
+    command: 'exec'
+    arguments: '-it code bash /etc/scripts/install_magento.sh'
