@@ -117,7 +117,7 @@ spec:
       - name: elasticsearch
         resources:
           requests:
-            memory: "100Mi"
+            memory: "256Mi"
         securityContext:
           privileged: true
           runAsUser: 1000
