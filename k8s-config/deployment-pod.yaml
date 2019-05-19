@@ -16,8 +16,10 @@ spec:
       readOnly: false
     - name: code-changes-apply
       mountPath: /etc/scripts/apply_changes.sh
+      subPath: apply_changes.sh
     - name: install-magento
       mountPath: /etc/scripts/install_magento.sh
+      subPath: install_magento.sh
   volumes:
   - name: code-changes-apply
     configMap:
