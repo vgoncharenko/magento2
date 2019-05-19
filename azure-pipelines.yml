@@ -104,17 +104,14 @@ steps:
     SourceFolder: '$(Build.SourcesDirectory)'
     Contents: '.git'
 
-- script: ls -la .git
-  displayName: 'ddd'
-
-# - task: ArchiveFiles@2
-#   displayName: 'Archive code'
-#   inputs:
-#     rootFolderOrFile: '$(Build.SourcesDirectory)'
-#     includeRootFolder: false
-#     archiveType: 'tar'
-#     archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
-#     replaceExistingArchive: true
+- task: ArchiveFiles@2
+  displayName: 'Archive code'
+  inputs:
+    rootFolderOrFile: '$(Build.SourcesDirectory)'
+    includeRootFolder: false
+    archiveType: 'tar'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+    replaceExistingArchive: true
 
             # - task: AzureCLI@1
             #   displayName: 'Copy code to Azure File Storage'
@@ -124,38 +121,38 @@ steps:
             #     scriptLocation: 'inlineScript'
             #     inlineScript: 'az storage file upload --share-name magento.zip --source $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip --connection-string {{.azureFileStorageConnectionString}}'
 
-# - task: Kubernetes@1
-#   displayName: 'Provision deployment pod'
-#   inputs:
-#     connectionType: 'Azure Resource Manager'
-#     azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
-#     azureResourceGroup: 'Trial'
-#     kubernetesCluster: 'magento22'
-#     command: 'apply'
-#     arguments: '-f k8s-config/deployment-pod.yaml --wait --force'
+- task: Kubernetes@1
+  displayName: 'Provision deployment pod'
+  inputs:
+    connectionType: 'Azure Resource Manager'
+    azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
+    azureResourceGroup: 'Trial'
+    kubernetesCluster: 'magento22'
+    command: 'apply'
+    arguments: '-f k8s-config/deployment-pod.yaml --wait --force'
 
-# - script: sleep 5
-#   displayName: 'sleep'
+- script: sleep 5
+  displayName: 'sleep'
 
-# - task: Kubernetes@1
-#   displayName: 'Copy code in deployment pod'
-#   inputs:
-#     connectionType: 'Azure Resource Manager'
-#     azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
-#     azureResourceGroup: 'Trial'
-#     kubernetesCluster: 'magento22'
-#     command: 'cp'
-#     arguments: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip code:/magento.zip'
+- task: Kubernetes@1
+  displayName: 'Copy code in deployment pod'
+  inputs:
+    connectionType: 'Azure Resource Manager'
+    azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
+    azureResourceGroup: 'Trial'
+    kubernetesCluster: 'magento22'
+    command: 'cp'
+    arguments: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip code:/magento.zip'
 
-# - task: Kubernetes@1
-#   displayName: 'Apply code changes'
-#   inputs:
-#     connectionType: 'Azure Resource Manager'
-#     azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
-#     azureResourceGroup: 'Trial'
-#     kubernetesCluster: 'magento22'
-#     command: 'exec'
-#     arguments: '-it code bash /etc/scripts/apply_changes.sh'
+- task: Kubernetes@1
+  displayName: 'Apply code changes'
+  inputs:
+    connectionType: 'Azure Resource Manager'
+    azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
+    azureResourceGroup: 'Trial'
+    kubernetesCluster: 'magento22'
+    command: 'exec'
+    arguments: '-it code bash /etc/scripts/apply_changes.sh'
 
 # - task: HelmDeploy@0
 #   displayName: 'Helm upgrade'
