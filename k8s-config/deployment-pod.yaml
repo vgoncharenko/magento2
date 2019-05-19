@@ -1,35 +1,20 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: v1
+kind: Pod
 metadata:
   name: code
-  labels:
-    app: code
 spec:
-  selector:
-    matchLabels:
-      app: code
-  replicas: 0
-  template:
-    metadata:
-      labels:
-        app: code
-        role: node1
-        tier: code
-    spec:
-      securityContext:
-        fsGroup: 2000
-      containers:
-      - name: code
-        image: gonchare.azurecr.io/php:7.2
-        resources:
-          limits:
-            memory: "128Mi"
-            cpu: "2m"
-        volumeMounts:
-        - name: code
-          mountPath: /magento2ce
-          readOnly: false
-      volumes:
-      - name: code
-        persistentVolumeClaim:
-          claimName: code
+  containers:
+  - name: code
+    image: gonchare.azurecr.io/php:7.2
+    resources:
+      limits:
+        memory: "128Mi"
+        cpu: "2m"
+    volumeMounts:
+    - name: code
+      mountPath: /magento2ce
+      readOnly: false
+  volumes:
+  - name: code
+    persistentVolumeClaim:
+      claimName: code

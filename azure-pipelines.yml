@@ -110,8 +110,17 @@ steps:
     azureResourceGroup: 'Trial'
     kubernetesCluster: 'magento22'
     command: 'cp'
-    arguments: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip $(kubectl get pods -o=name -l app=code | sed "s/^.\{4\}//"):/magento.zip'
+    arguments: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip code:/magento.zip'
 
+- task: Kubernetes@1
+  displayName: 'Delete old code'
+  inputs:
+    connectionType: 'Azure Resource Manager'
+    azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
+    azureResourceGroup: 'Trial'
+    kubernetesCluster: 'magento22'
+    command: 'exec'
+    arguments: '-it code rm -rf /magento2ce/*'
 
 - task: Kubernetes@1
   displayName: 'Unarchive code in pod'
@@ -121,7 +130,7 @@ steps:
     azureResourceGroup: 'Trial'
     kubernetesCluster: 'magento22'
     command: 'exec'
-    arguments: '-it $(kubectl get pods -o=name -l app=code | sed "s/^.\{4\}//") tar -xzf /magento.zip -C /magento2ce'
+    arguments: '-it code tar -xzf /magento.zip -C /magento2ce'
 
 - task: Kubernetes@1
   displayName: 'Remove archive'
@@ -131,7 +140,7 @@ steps:
     azureResourceGroup: 'Trial'
     kubernetesCluster: 'magento22'
     command: 'exec'
-    arguments: '-it $(kubectl get pods -o=name -l app=code | sed "s/^.\{4\}//") rm /magento.zip'
+    arguments: '-it code rm /magento.zip'
 
 - task: Kubernetes@1
   displayName: 'Composer install'
