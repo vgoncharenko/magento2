@@ -21,6 +21,12 @@ spec:
       mountPath: /etc/scripts
       subPath: install_magento.sh
   volumes:
+  - name: code-changes-apply
+    configMap:
+      name: code-changes-apply
+  - name: install-magento
+    configMap:
+      name: install-magento
   - name: code
     persistentVolumeClaim:
       claimName: code
