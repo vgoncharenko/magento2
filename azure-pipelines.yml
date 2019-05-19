@@ -126,6 +126,9 @@ steps:
     command: 'apply'
     arguments: '-f k8s-config/deployment-pod.yaml --wait'
 
+- script: sleep 5
+  displayName: 'sleep'
+
 - task: Kubernetes@1
   displayName: 'Copy code in deployment pod'
   inputs:
