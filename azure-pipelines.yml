@@ -46,20 +46,20 @@ steps:
     command: 'init'
     canaryImage: true
 
-- script: |
-    sudo update-alternatives --set php /usr/bin/php$(phpVersion)
-    sudo update-alternatives --set phar /usr/bin/phar$(phpVersion)
-    sudo update-alternatives --set phpdbg /usr/bin/phpdbg$(phpVersion)
-    sudo update-alternatives --set php-cgi /usr/bin/php-cgi$(phpVersion)
-    sudo update-alternatives --set phar.phar /usr/bin/phar.phar$(phpVersion)
-    sudo apt update
-    sudo apt install php-dev libmcrypt-dev php-pear
-    php -version
-  displayName: 'Use PHP version $(phpVersion)'
+# - script: |
+#     sudo update-alternatives --set php /usr/bin/php$(phpVersion)
+#     sudo update-alternatives --set phar /usr/bin/phar$(phpVersion)
+#     sudo update-alternatives --set phpdbg /usr/bin/phpdbg$(phpVersion)
+#     sudo update-alternatives --set php-cgi /usr/bin/php-cgi$(phpVersion)
+#     sudo update-alternatives --set phar.phar /usr/bin/phar.phar$(phpVersion)
+#     sudo apt update
+#     sudo apt install php-dev libmcrypt-dev php-pear
+#     php -version
+#   displayName: 'Use PHP version $(phpVersion)'
 
-- script: |
-    php /usr/bin/composer install --no-dev
-  displayName: 'composer install'
+# - script: |
+#     php /usr/bin/composer install --no-dev
+#   displayName: 'composer install'
 
 # - task: HelmDeploy@0
 #   displayName: 'Helm package'
@@ -84,6 +84,56 @@ steps:
     archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
     replaceExistingArchive: true
 
+- task: Kubernetes@1
+  displayName: 'Copy code to Azure File Storage'
+  inputs:
+    connectionType: 'Azure Resource Manager'
+    azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
+    azureResourceGroup: 'Trial'
+    kubernetesCluster: 'magento22'
+    command: 'cp'
+    arguments: '--share-name magento.zip --source $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip --connection-string {{.azureFileStorageConnectionString}}'
+
+- task: Kubernetes@1
+  displayName: 'Provision deployment node'
+  inputs:
+    connectionType: 'Azure Resource Manager'
+    azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
+    azureResourceGroup: 'Trial'
+    kubernetesCluster: 'magento22'
+    command: 'apply'
+    arguments: '-f k8s-config/deployment-done.yaml'
+
+- task: Kubernetes@1
+  displayName: 'Unarchive code in pod'
+  inputs:
+    connectionType: 'Azure Resource Manager'
+    azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
+    azureResourceGroup: 'Trial'
+    kubernetesCluster: 'magento22'
+    command: 'exec'
+    arguments: '-it $(kubectl get pods -o=name -l app=code | sed "s/^.\{4\}//") tar -xzf /magento2ce/magento.zip'
+
+- task: Kubernetes@1
+  displayName: 'remove archive'
+  inputs:
+    connectionType: 'Azure Resource Manager'
+    azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
+    azureResourceGroup: 'Trial'
+    kubernetesCluster: 'magento22'
+    command: 'exec'
+    arguments: '-it $(kubectl get pods -o=name -l app=code | sed "s/^.\{4\}//") rm /magento2ce/magento.zip'
+
+- task: Kubernetes@1
+  displayName: 'composer install'
+  inputs:
+    connectionType: 'Azure Resource Manager'
+    azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
+    azureResourceGroup: 'Trial'
+    kubernetesCluster: 'magento22'
+    command: 'exec'
+    arguments: '-it $(kubectl get pods -o=name -l app=code | sed "s/^.\{4\}//") $(cd /magento2ce && composer install)'
+
 - task: HelmDeploy@0
   displayName: 'Helm upgrade'
   inputs:
@@ -97,23 +147,3 @@ steps:
     chartName: 'magento2-helm'
     recreate: true
     resetValues: true
-
-- task: Kubernetes@1
-  displayName: 'Copy code to pod'
-  inputs:
-    connectionType: 'Azure Resource Manager'
-    azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
-    azureResourceGroup: 'Trial'
-    kubernetesCluster: 'magento22'
-    command: 'cp'
-    arguments: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip $(kubectl get pods -o=name -l app=php | sed "s/^.\{4\}//" | head -n1):/magento.zip'
-
-- task: Kubernetes@1
-  displayName: 'Unarchive code in pod'
-  inputs:
-    connectionType: 'Azure Resource Manager'
-    azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
-    azureResourceGroup: 'Trial'
-    kubernetesCluster: 'magento22'
-    command: 'exec'
-    arguments: '-it tar -xzf magento.zip -C /magento2ce'
