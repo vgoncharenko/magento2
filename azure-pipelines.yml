@@ -13,6 +13,12 @@ variables:
   phpVersion: 7.2
 
 steps:
+
+- checkout: self
+  clean: false
+  fetchDepth: 1
+  lfs: false
+
 #- script: composer install --no-interaction --prefer-dist
 #  displayName: 'composer install'
 
@@ -152,7 +158,7 @@ steps:
     azureResourceGroup: 'Trial'
     kubernetesCluster: 'magento22'
     command: 'exec'
-    arguments: '-it code bash /etc/scripts/apply_changes.sh'
+    arguments: '-i code bash /etc/scripts/apply_changes.sh'
 
 # - task: HelmDeploy@0
 #   displayName: 'Helm upgrade'
