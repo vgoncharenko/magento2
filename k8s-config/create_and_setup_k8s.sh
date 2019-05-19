@@ -21,14 +21,17 @@ az role assignment create --assignee $CLIENT_ID --role acrpull --scope $ACR_ID
 # Switch context
 az aks get-credentials --resource-group trial -n $AKS_CLUSTER_NAME
 
+# Create roles and bindings
+kubectl apply -f k8s-config/azure-role-binding.yaml
+
 # Create Services
 kubectl create -f k8s-config/svc.yaml
 
 # Create storage class
-#kubectl apply -f k8s-config/azure-file-sc.yaml
+kubectl apply -f k8s-config/azure-file-sc.yaml
 
-# Create roles and bindings
-#kubectl apply -f k8s-config/azure-role-binding.yaml
+# Create PV
+kubectl apply -f k8s-config/azure-file-pvc.yaml
 
 
 # Obtain the full registry ID for subsequent command args

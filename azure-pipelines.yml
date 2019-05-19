@@ -61,30 +61,59 @@ steps:
     php /usr/bin/composer install --no-dev
   displayName: 'composer install'
 
-- task: HelmDeploy@0
-  displayName: 'Helm package'
-  inputs:
-    connectionType: 'Azure Resource Manager'
-    azureSubscription: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
-    azureResourceGroup: 'Trial'
-    kubernetesCluster: 'magento22'
-    command: 'package'
-    chartType: 'Name'
-    chartName: 'magento2-helm'
-
-- script: az acr helm push --name {{.registryName}} --subscription "Free Trial" --resource-group trial --username {{.registryLogin}} --password {{.registryPassword}}
-  displayName: 'push package'
-
 # - task: HelmDeploy@0
-#   displayName: 'Helm upgrade'
+#   displayName: 'Helm package'
 #   inputs:
 #     connectionType: 'Azure Resource Manager'
 #     azureSubscription: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
 #     azureResourceGroup: 'Trial'
 #     kubernetesCluster: 'magento22'
-#     command: 'upgrade'
-#     arguments: '--install --cleanup-on-fail --force'
+#     command: 'package'
 #     chartType: 'Name'
 #     chartName: 'magento2-helm'
-#     recreate: true
-#     resetValues: true
+
+# - script: az acr helm push --name {{.registryName}} --subscription "Free Trial" --resource-group trial --username {{.registryLogin}} --password {{.registryPassword}}
+#   displayName: 'push package'
+
+- task: ArchiveFiles@2
+  displayName: 'Archive code'
+  inputs:
+    rootFolderOrFile: '$(Build.BinariesDirectory)'
+    includeRootFolder: true
+    archiveType: 'tar'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+    replaceExistingArchive: true
+
+- task: HelmDeploy@0
+  displayName: 'Helm upgrade'
+  inputs:
+    connectionType: 'Azure Resource Manager'
+    azureSubscription: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
+    azureResourceGroup: 'Trial'
+    kubernetesCluster: 'magento22'
+    command: 'upgrade'
+    arguments: '--install --cleanup-on-fail --force'
+    chartType: 'Name'
+    chartName: 'magento2-helm'
+    recreate: true
+    resetValues: true
+
+- task: Kubernetes@1
+  displayName: 'Copy code to pod'
+  inputs:
+    connectionType: 'Azure Resource Manager'
+    azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
+    azureResourceGroup: 'Trial'
+    kubernetesCluster: 'magento22'
+    command: 'cp'
+    arguments: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip $(kubectl get pods -o=name -l app=php | sed "s/^.\{4\}//" | head -n1):/magento.zip'
+
+- task: Kubernetes@1
+  displayName: 'Unarchive code in pod'
+  inputs:
+    connectionType: 'Azure Resource Manager'
+    azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
+    azureResourceGroup: 'Trial'
+    kubernetesCluster: 'magento22'
+    command: 'exec'
+    arguments: '-it tar -xzf magento.zip -C /magento2ce'

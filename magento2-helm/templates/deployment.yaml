@@ -38,10 +38,8 @@ spec:
         configMap:
           name: nginx-config
       - name: code
-        gitRepo:
-          repository: "https://github.com/vgoncharenko/magento2.git"
-          revision: 2.3
-          directory: .
+        persistentVolumeClaim:
+          claimName: code
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -78,7 +76,5 @@ spec:
           readOnly: false
       volumes:
       - name: code
-        gitRepo:
-          repository: "https://github.com/vgoncharenko/magento2.git"
-          revision: 2.3
-          directory: .
+        persistentVolumeClaim:
+          claimName: code
