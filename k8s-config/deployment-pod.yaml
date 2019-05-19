@@ -15,11 +15,9 @@ spec:
       mountPath: /magento2ce
       readOnly: false
     - name: code-changes-apply
-      mountPath: /etc/scripts
-      subPath: apply_changes.sh
+      mountPath: /etc/scripts/apply_changes.sh
     - name: install-magento
-      mountPath: /etc/scripts
-      subPath: install_magento.sh
+      mountPath: /etc/scripts/install_magento.sh
   volumes:
   - name: code-changes-apply
     configMap:

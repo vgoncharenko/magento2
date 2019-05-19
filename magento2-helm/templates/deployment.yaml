@@ -32,7 +32,6 @@ spec:
           readOnly: false
         - name: nginx-config
           mountPath: /etc/nginx/conf.d/magento.conf
-          subPath: magento.conf
       volumes:
       - name: nginx-config
         configMap:
