@@ -160,26 +160,26 @@ steps:
     command: 'exec'
     arguments: '-i code bash /etc/scripts/apply_changes.sh'
 
-# - task: HelmDeploy@0
-#   displayName: 'Helm upgrade'
-#   inputs:
-#     connectionType: 'Azure Resource Manager'
-#     azureSubscription: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
-#     azureResourceGroup: 'Trial'
-#     kubernetesCluster: 'magento22'
-#     command: 'upgrade'
-#     arguments: '--install --cleanup-on-fail --force'
-#     chartType: 'Name'
-#     chartName: 'magento2-helm'
-#     recreate: true
-#     resetValues: true
+- task: HelmDeploy@0
+  displayName: 'Helm upgrade'
+  inputs:
+    connectionType: 'Azure Resource Manager'
+    azureSubscription: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
+    azureResourceGroup: 'Trial'
+    kubernetesCluster: 'magento22'
+    command: 'upgrade'
+    arguments: '--install --cleanup-on-fail --force'
+    chartType: 'Name'
+    chartName: 'magento2-helm'
+    recreate: true
+    resetValues: true
 
-# - task: Kubernetes@1
-#   displayName: 'Install Magento'
-#   inputs:
-#     connectionType: 'Azure Resource Manager'
-#     azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
-#     azureResourceGroup: 'Trial'
-#     kubernetesCluster: 'magento22'
-#     command: 'exec'
-#     arguments: '-it code bash /etc/scripts/install_magento.sh'
+- task: Kubernetes@1
+  displayName: 'Install Magento'
+  inputs:
+    connectionType: 'Azure Resource Manager'
+    azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
+    azureResourceGroup: 'Trial'
+    kubernetesCluster: 'magento22'
+    command: 'exec'
+    arguments: '-i code bash /etc/scripts/install_magento.sh'
