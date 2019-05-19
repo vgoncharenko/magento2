@@ -84,15 +84,16 @@ steps:
     archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
     replaceExistingArchive: true
 
-- task: Kubernetes@1
+- task: AzureFileCopy@2
+  inputs:
+    SourcePath: 'aaa'
+    Destination: 'AzureBlob'
+
+- task: AzureCLI@1
   displayName: 'Copy code to Azure File Storage'
   inputs:
-    connectionType: 'Azure Resource Manager'
-    azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
-    azureResourceGroup: 'Trial'
-    kubernetesCluster: 'magento22'
-    command: 'cp'
-    arguments: '--share-name magento.zip --source $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip --connection-string {{.azureFileStorageConnectionString}}'
+    scriptLocation: 'inlineScript'
+    inlineScript: 'az storage file upload --share-name magento.zip --source $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip --connection-string {{.azureFileStorageConnectionString}}'
 
 - task: Kubernetes@1
   displayName: 'Provision deployment node'
@@ -115,7 +116,7 @@ steps:
     arguments: '-it $(kubectl get pods -o=name -l app=code | sed "s/^.\{4\}//") tar -xzf /magento2ce/magento.zip'
 
 - task: Kubernetes@1
-  displayName: 'remove archive'
+  displayName: 'Remove archive'
   inputs:
     connectionType: 'Azure Resource Manager'
     azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
@@ -125,7 +126,7 @@ steps:
     arguments: '-it $(kubectl get pods -o=name -l app=code | sed "s/^.\{4\}//") rm /magento2ce/magento.zip'
 
 - task: Kubernetes@1
-  displayName: 'composer install'
+  displayName: 'Composer install'
   inputs:
     connectionType: 'Azure Resource Manager'
     azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
