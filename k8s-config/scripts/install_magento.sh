@@ -7,7 +7,7 @@ DB_USER='magento@magento2ee'
 DB_PASS='123123QqQ'
 DP_HOST='magento2ee.mysql.database.azure.com'
 MAGENTO_URL='104.208.39.182:8087'
-MAGENTO_DIR='magento2ce'
+MAGENTO_DIR='/magento2ce'
 
 cd $MAGENTO_DIR
 composer install

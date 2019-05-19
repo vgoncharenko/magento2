@@ -1,8 +1,3 @@
-# PHP
-# Test and package your PHP project.
-# Add steps that run tests, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/php
-
 trigger:
 - 2.3
 
@@ -19,24 +14,33 @@ steps:
   fetchDepth: 1
   lfs: false
 
-#- script: composer install --no-interaction --prefer-dist
-#  displayName: 'composer install'
-
 - task: KubectlInstaller@0
   inputs:
     kubectlVersion: 'latest'
 
-- task: Kubernetes@1
-  displayName: 'Create nginx configMap'
-  inputs:
-    connectionType: 'Azure Resource Manager'
-    azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
-    azureResourceGroup: 'Trial'
-    kubernetesCluster: 'magento22'
-    configMapName: 'nginx-config'
-    forceUpdateConfigMap: true
-    useConfigMapFile: true
-    configMapFile: 'docker/images/web/magento.conf'
+# - task: Kubernetes@1
+#   displayName: 'Create nginx configMap'
+#   inputs:
+#     connectionType: 'Azure Resource Manager'
+#     azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
+#     azureResourceGroup: 'Trial'
+#     kubernetesCluster: 'magento22'
+#     configMapName: 'nginx-config'
+#     forceUpdateConfigMap: true
+#     useConfigMapFile: true
+#     configMapFile: 'docker/images/web/magento.conf'
+
+# - task: Kubernetes@1
+#   displayName: 'Create elasticsearch configMap'
+#   inputs:
+#     connectionType: 'Azure Resource Manager'
+#     azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
+#     azureResourceGroup: 'Trial'
+#     kubernetesCluster: 'magento22'
+#     configMapName: 'es-config'
+#     forceUpdateConfigMap: true
+#     useConfigMapFile: true
+#     configMapFile: 'docker/images/elasticsearch/elasticsearch.yml'
 
 - task: Kubernetes@1
   displayName: 'Create code changes apply file'
@@ -62,48 +66,19 @@ steps:
     useConfigMapFile: true
     configMapFile: 'k8s-config/scripts/install_magento.sh'
 
-- task: HelmInstaller@1
-  inputs:
-    helmVersionToInstall: 'latest'
-
-- task: HelmDeploy@0
-  displayName: 'Helm init'
-  inputs:
-    connectionType: 'Azure Resource Manager'
-    azureSubscription: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
-    azureResourceGroup: 'Trial'
-    kubernetesCluster: 'magento22'
-    command: 'init'
-    canaryImage: true
-
-# - script: |
-#     sudo update-alternatives --set php /usr/bin/php$(phpVersion)
-#     sudo update-alternatives --set phar /usr/bin/phar$(phpVersion)
-#     sudo update-alternatives --set phpdbg /usr/bin/phpdbg$(phpVersion)
-#     sudo update-alternatives --set php-cgi /usr/bin/php-cgi$(phpVersion)
-#     sudo update-alternatives --set phar.phar /usr/bin/phar.phar$(phpVersion)
-#     sudo apt update
-#     sudo apt install php-dev libmcrypt-dev php-pear
-#     php -version
-#   displayName: 'Use PHP version $(phpVersion)'
-
-# - script: |
-#     php /usr/bin/composer install --no-dev
-#   displayName: 'composer install'
+# - task: HelmInstaller@1
+#   inputs:
+#     helmVersionToInstall: 'latest'
 
 # - task: HelmDeploy@0
-#   displayName: 'Helm package'
+#   displayName: 'Helm init'
 #   inputs:
 #     connectionType: 'Azure Resource Manager'
 #     azureSubscription: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
 #     azureResourceGroup: 'Trial'
 #     kubernetesCluster: 'magento22'
-#     command: 'package'
-#     chartType: 'Name'
-#     chartName: 'magento2-helm'
-
-# - script: az acr helm push --name {{.registryName}} --subscription "Free Trial" --resource-group trial --username {{.registryLogin}} --password {{.registryPassword}}
-#   displayName: 'push package'
+#     command: 'init'
+#     canaryImage: true
 
 - task: DeleteFiles@1
   inputs:
@@ -160,26 +135,26 @@ steps:
     command: 'exec'
     arguments: '-i code bash /etc/scripts/apply_changes.sh'
 
-- task: HelmDeploy@0
-  displayName: 'Helm upgrade'
-  inputs:
-    connectionType: 'Azure Resource Manager'
-    azureSubscription: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
-    azureResourceGroup: 'Trial'
-    kubernetesCluster: 'magento22'
-    command: 'upgrade'
-    arguments: '--install --cleanup-on-fail --force'
-    chartType: 'Name'
-    chartName: 'magento2-helm'
-    recreate: true
-    resetValues: true
+# - task: HelmDeploy@0
+#   displayName: 'Helm upgrade'
+#   inputs:
+#     connectionType: 'Azure Resource Manager'
+#     azureSubscription: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
+#     azureResourceGroup: 'Trial'
+#     kubernetesCluster: 'magento22'
+#     command: 'upgrade'
+#     arguments: '--install --cleanup-on-fail --force'
+#     chartType: 'Name'
+#     chartName: 'magento2-helm'
+#     recreate: true
+#     resetValues: true
 
-- task: Kubernetes@1
-  displayName: 'Install Magento'
-  inputs:
-    connectionType: 'Azure Resource Manager'
-    azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
-    azureResourceGroup: 'Trial'
-    kubernetesCluster: 'magento22'
-    command: 'exec'
-    arguments: '-i code bash /etc/scripts/install_magento.sh'
+# - task: Kubernetes@1
+#   displayName: 'Install Magento'
+#   inputs:
+#     connectionType: 'Azure Resource Manager'
+#     azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
+#     azureResourceGroup: 'Trial'
+#     kubernetesCluster: 'magento22'
+#     command: 'exec'
+#     arguments: '-i code bash /etc/scripts/install_magento.sh'

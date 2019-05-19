@@ -23,3 +23,29 @@ spec:
   resources:
     requests:
       storage: 2Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: es-data
+spec:
+  capacity:
+    storage: 2Gi
+  storageClassName: es-data
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Recycle
+  hostPath:
+    path: "/usr/share/elasticsearch/data"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: es-data
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: es-data
+  resources:
+    requests:
+      storage: 2Gi
