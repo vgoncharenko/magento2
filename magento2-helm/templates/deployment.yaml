@@ -99,8 +99,6 @@ metadata:
   name: esnode
 spec:
   replicas: 2
-  updateStrategy:
-    type: RollingUpdate
   template:
     metadata:
       labels:
