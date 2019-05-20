@@ -23,7 +23,7 @@ spec:
   selector:
     app: web
   ports:
-  - port: 8087
+  - port: 80
     targetPort: 8087
     protocol: TCP
   type: LoadBalancer

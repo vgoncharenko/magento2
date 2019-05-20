@@ -5,4 +5,4 @@ discovery.zen.ping.unicast.hosts: elasticsearch-cluster
 discovery.zen.minimum_master_nodes: 1
 xpack.security.enabled: false
 xpack.monitoring.enabled: false
-ES_JAVA_OPTS: -Xms128m -Xmx128m
+ES_JAVA_OPTS: "-Xms128m -Xmx128m"
