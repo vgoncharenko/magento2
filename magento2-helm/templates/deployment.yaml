@@ -18,29 +18,16 @@ spec:
       initContainers:
       - name: prepare-code
         image: busybox
-        command: ["sh", "-c", "rm -rf /magento2ce/* && tar -xzf /magento.zip -C /magento2ce && rm /magento.zip"]
+        command: ["sh", "-c", "mv /magento2ce/magento.zip /magento.zip && rm -rf /magento2ce/* && tar -xzf /magento.zip -C /magento2ce && rm /magento.zip && chown -R www-data:www-data /magento2ce"]
         securityContext:
           privileged: true
         volumeMounts:
-         - name: code
-          mountPath: /magento2ce
-          readOnly: false
-        - name: code-changes-apply
-          mountPath: /etc/scripts/apply_changes.sh
-          subPath: apply_changes.sh
-      initContainers:
-      - name: fix-permissions
-        image: busybox
-        command: ["sh", "-c", "chown -R www-data:www-data /var/cache/nginx && chmod -R 777 /var/cache/nginx && rm /etc/nginx/conf.d/default.conf && sed -i 's/nginx;/www-data;/g' /etc/nginx/nginx.conf"]
-        securityContext:
-          privileged: true
-        volumeMounts:
-         - name: code
+        - name: code
           mountPath: /magento2ce
           readOnly: false
       containers:
       - name: magento2-web
-        image: gonchare.azurecr.io/nginx:latest
+        image: gonchare.azurecr.io/my-nginx:latest
         securityContext:
           capabilities:
             add:
@@ -254,4 +241,3 @@ spec:
   parameters:
     location: centralus
     resourceGroup: trial
-

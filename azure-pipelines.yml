@@ -69,7 +69,7 @@ steps:
     azureResourceGroup: 'Trial'
     kubernetesCluster: 'magento22'
     command: 'cp'
-    arguments: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip code:/magento.zip'
+    arguments: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip code:/magento2ce/magento.zip'
 #========================================================
 
 - task: HelmDeploy@0
@@ -81,6 +81,12 @@ steps:
     kubernetesCluster: 'magento22'
     command: 'init'
     canaryImage: true
+
+- script: |
+    helm repo add svc-cat https://svc-catalog-charts.storage.googleapis.com
+    helm install svc-cat/catalog --name catalog --namespace catalog --set apiserver.storage.etcd.persistence.enabled=true --set apiserver.healthcheck.enabled=false --set controllerManager.healthcheck.enabled=false --set apiserver.verbosity=2 --set controllerManager.verbosity=2 --wait
+    sleep 60
+  displayName: 'Add Open Service Broker for Azure'
 
 - task: Kubernetes@1
   displayName: 'Create nginx configMap'
@@ -106,18 +112,6 @@ steps:
     useConfigMapFile: true
     configMapFile: 'docker/images/elasticsearch/elasticsearch.yml'
 
-# - task: Kubernetes@1
-#   displayName: 'Create code changes apply file'
-#   inputs:
-#     connectionType: 'Azure Resource Manager'
-#     azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
-#     azureResourceGroup: 'Trial'
-#     kubernetesCluster: 'magento22'
-#     configMapName: 'code-changes-apply'
-#     forceUpdateConfigMap: true
-#     useConfigMapFile: true
-#     configMapFile: 'k8s-config/scripts/apply_changes.sh'
-
 - task: Kubernetes@1
   displayName: 'Create magento install file'
   inputs:
@@ -130,24 +124,24 @@ steps:
     useConfigMapFile: true
     configMapFile: 'k8s-config/scripts/install_magento.sh'
 
-                    # - task: Kubernetes@1
-                    #   displayName: 'Apply code changes'
-                    #   inputs:
-                    #     connectionType: 'Azure Resource Manager'
-                    #     azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
-                    #     azureResourceGroup: 'Trial'
-                    #     kubernetesCluster: 'magento22'
-                    #     command: 'exec'
-                    #     arguments: '-i code bash /etc/scripts/apply_changes.sh'
-
 - task: Kubernetes@1
-  displayName: 'Update services'
+  displayName: 'Delete services'
   inputs:
     connectionType: 'Azure Resource Manager'
     azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
     azureResourceGroup: 'Trial'
     kubernetesCluster: 'magento22'
-    command: 'apply'
+    command: 'delete'
+    arguments: '-f k8s-config/svc.yaml'
+
+- task: Kubernetes@1
+  displayName: 'Create services'
+  inputs:
+    connectionType: 'Azure Resource Manager'
+    azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
+    azureResourceGroup: 'Trial'
+    kubernetesCluster: 'magento22'
+    command: 'create'
     arguments: '-f k8s-config/svc.yaml'
 
 - task: HelmDeploy@0
