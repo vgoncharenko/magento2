@@ -15,10 +15,32 @@ spec:
         role: node1
         tier: web
     spec:
-      # restartPolicy: Never
+      initContainers:
+      - name: prepare-code
+        image: busybox
+        command: ["sh", "-c", "rm -rf /magento2ce/* && tar -xzf /magento.zip -C /magento2ce && rm /magento.zip"]
+        securityContext:
+          privileged: true
+        volumeMounts:
+         - name: code
+          mountPath: /magento2ce
+          readOnly: false
+        - name: code-changes-apply
+          mountPath: /etc/scripts/apply_changes.sh
+          subPath: apply_changes.sh
+      initContainers:
+      - name: fix-permissions
+        image: busybox
+        command: ["sh", "-c", "chown -R www-data:www-data /var/cache/nginx && chmod -R 777 /var/cache/nginx && rm /etc/nginx/conf.d/default.conf && sed -i 's/nginx;/www-data;/g' /etc/nginx/nginx.conf"]
+        securityContext:
+          privileged: true
+        volumeMounts:
+         - name: code
+          mountPath: /magento2ce
+          readOnly: false
       containers:
       - name: magento2-web
-        image: gonchare.azurecr.io/my-nginx:latest
+        image: gonchare.azurecr.io/nginx:latest
         securityContext:
           capabilities:
             add:
@@ -32,6 +54,32 @@ spec:
             cpu: "10m"
         ports:
         - containerPort: 8087
+        env:
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: mariadb-host
+        - name: DB_PORT
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: mariadb-port
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: mariadb-database
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: mariadb-username
+        - name: DB_PASS
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: mariadb-password
         volumeMounts:
         - name: code
           mountPath: /magento2ce
@@ -39,6 +87,9 @@ spec:
         - name: nginx-config
           mountPath: /etc/nginx/conf.d/magento.conf
           subPath: magento.conf
+        - name: install-magento
+          mountPath: /etc/scripts/install_magento.sh
+          subPath: install_magento.sh
       volumes:
       - name: nginx-config
         configMap:
@@ -46,6 +97,12 @@ spec:
       - name: code
         persistentVolumeClaim:
           claimName: code
+      - name: code-changes-apply
+        configMap:
+          name: code-changes-apply
+      - name: install-magento
+        configMap:
+          name: install-magento
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -65,7 +122,6 @@ spec:
         role: node1
         tier: php
     spec:
-      # restartPolicy: Never
       securityContext:
         fsGroup: 33
       containers:
@@ -169,3 +225,21 @@ spec:
       - name: es-data
         persistentVolumeClaim:
           claimName: es-data
+---
+apiVersion: servicecatalog.k8s.io/v1beta1
+kind: ServiceInstance
+metadata:
+  name: magento2ee
+spec:
+  clusterServiceClassExternalName: azure-mysql-5-6
+  clusterServicePlanExternalName: basic
+  parameters:
+    location: centralus
+    resourceGroup: trial
+    firewallRules:
+    - startIPAddress: "0.0.0.0"
+      endIPAddress: "255.255.255.255"
+      name: "AllowAll"
+    cores: 1
+    storage: 50
+    backupRetention: 7
