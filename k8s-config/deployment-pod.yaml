@@ -8,25 +8,13 @@ spec:
     image: gonchare.azurecr.io/php:7.2
     resources:
       limits:
-        memory: "128Mi"
-        cpu: "2m"
+        memory: "32Mi"
+        cpu: "1m"
     volumeMounts:
     - name: code
       mountPath: /magento2ce
       readOnly: false
-    - name: code-changes-apply
-      mountPath: /etc/scripts/apply_changes.sh
-      subPath: apply_changes.sh
-    - name: install-magento
-      mountPath: /etc/scripts/install_magento.sh
-      subPath: install_magento.sh
   volumes:
-  - name: code-changes-apply
-    configMap:
-      name: code-changes-apply
-  - name: install-magento
-    configMap:
-      name: install-magento
   - name: code
     persistentVolumeClaim:
       claimName: code
