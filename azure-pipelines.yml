@@ -146,7 +146,7 @@ steps:
     azureResourceGroup: 'Trial'
     kubernetesCluster: 'magento22'
     command: 'upgrade'
-    arguments: '--install --cleanup-on-fail --force --timeout 1200'
+    arguments: '--install --cleanup-on-fail --force --timeout 1500'
     chartType: 'Name'
     chartName: 'magento2-helm'
     recreate: true

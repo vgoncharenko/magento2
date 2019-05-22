@@ -69,7 +69,7 @@ spec:
   selector:
     matchLabels:
       app: php
-  replicas: 1
+  replicas: 2
   template:
     metadata:
       labels:
@@ -96,27 +96,27 @@ spec:
           valueFrom:
             secretKeyRef:
               name: mysql-secret
-              key: mariadb-host
+              key: host
         - name: DB_PORT
           valueFrom:
             secretKeyRef:
               name: mysql-secret
-              key: mariadb-port
+              key: port
         - name: DB_NAME
           valueFrom:
             secretKeyRef:
               name: mysql-secret
-              key: mariadb-database
+              key: database
         - name: DB_USER
           valueFrom:
             secretKeyRef:
               name: mysql-secret
-              key: mariadb-username
+              key: username
         - name: DB_PASS
           valueFrom:
             secretKeyRef:
               name: mysql-secret
-              key: mariadb-password
+              key: password
         ports:
         - containerPort: 9000
         volumeMounts:
