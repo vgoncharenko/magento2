@@ -41,6 +41,56 @@ spec:
             cpu: "10m"
         ports:
         - containerPort: 8087
+        volumeMounts:
+        - name: code
+          mountPath: /magento2ce
+          readOnly: false
+        - name: nginx-config
+          mountPath: /etc/nginx/conf.d/magento.conf
+          subPath: magento.conf
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: nginx-config
+      - name: code
+        persistentVolumeClaim:
+          claimName: code
+      - name: code-changes-apply
+        configMap:
+          name: code-changes-apply
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: php
+  labels:
+    app: php
+spec:
+  selector:
+    matchLabels:
+      app: php
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: php
+    spec:
+      securityContext:
+        fsGroup: 33
+      containers:
+      - name: magento2-php
+        image: gonchare.azurecr.io/php:7.2
+        securityContext:
+          privileged: true
+          runAsUser: 33
+          capabilities:
+            add:
+            - IPC_LOCK
+            - SYS_RESOURCE
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "10m"
         env:
         - name: DB_HOST
           valueFrom:
@@ -67,74 +117,22 @@ spec:
             secretKeyRef:
               name: mysql-secret
               key: mariadb-password
-        volumeMounts:
-        - name: code
-          mountPath: /magento2ce
-          readOnly: false
-        - name: nginx-config
-          mountPath: /etc/nginx/conf.d/magento.conf
-          subPath: magento.conf
-        - name: install-magento
-          mountPath: /etc/scripts/install_magento.sh
-          subPath: install_magento.sh
-      volumes:
-      - name: nginx-config
-        configMap:
-          name: nginx-config
-      - name: code
-        persistentVolumeClaim:
-          claimName: code
-      - name: code-changes-apply
-        configMap:
-          name: code-changes-apply
-      - name: install-magento
-        configMap:
-          name: install-magento
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: php
-  labels:
-    app: php
-spec:
-  selector:
-    matchLabels:
-      app: php
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        app: php
-        role: node1
-        tier: php
-    spec:
-      securityContext:
-        fsGroup: 33
-      containers:
-      - name: magento2-php
-        image: gonchare.azurecr.io/php:7.2
-        securityContext:
-          privileged: true
-          runAsUser: 33
-          capabilities:
-            add:
-            - IPC_LOCK
-            - SYS_RESOURCE
-        resources:
-          limits:
-            memory: "128Mi"
-            cpu: "10m"
         ports:
         - containerPort: 9000
         volumeMounts:
         - name: code
           mountPath: /magento2ce
           readOnly: false
+        - name: install-magento
+          mountPath: /etc/scripts/install_magento.sh
+          subPath: install_magento.sh
       volumes:
       - name: code
         persistentVolumeClaim:
           claimName: code
+      - name: install-magento
+        configMap:
+          name: install-magento
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -212,32 +210,3 @@ spec:
       - name: es-data
         persistentVolumeClaim:
           claimName: es-data
----
-apiVersion: servicecatalog.k8s.io/v1beta1
-kind: ServiceInstance
-metadata:
-  name: magento2ee
-spec:
-  clusterServiceClassExternalName: azure-mysql-5-6
-  clusterServicePlanExternalName: basic
-  parameters:
-    location: centralus
-    resourceGroup: trial
-    firewallRules:
-    - startIPAddress: "0.0.0.0"
-      endIPAddress: "255.255.255.255"
-      name: "AllowAll"
-    cores: 1
-    storage: 50
-    backupRetention: 7
----
-apiVersion: servicecatalog.k8s.io/v1beta1
-kind: ServiceInstance
-metadata:
-  name: rediscache-instance
-spec:
-  clusterServiceClassExternalName: azure-rediscache
-  clusterServicePlanExternalName: basic
-  parameters:
-    location: centralus
-    resourceGroup: trial

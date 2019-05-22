@@ -82,12 +82,6 @@ steps:
     command: 'init'
     canaryImage: true
 
-- script: |
-    helm repo add svc-cat https://svc-catalog-charts.storage.googleapis.com
-    helm install svc-cat/catalog --name catalog --namespace catalog --set apiserver.storage.etcd.persistence.enabled=true --set apiserver.healthcheck.enabled=false --set controllerManager.healthcheck.enabled=false --set apiserver.verbosity=2 --set controllerManager.verbosity=2 --wait
-    sleep 60
-  displayName: 'Add Open Service Broker for Azure'
-
 - task: Kubernetes@1
   displayName: 'Create nginx configMap'
   inputs:
@@ -152,18 +146,8 @@ steps:
     azureResourceGroup: 'Trial'
     kubernetesCluster: 'magento22'
     command: 'upgrade'
-    arguments: '--install --cleanup-on-fail --force'
+    arguments: '--install --cleanup-on-fail --force --timeout 1200'
     chartType: 'Name'
     chartName: 'magento2-helm'
     recreate: true
     resetValues: true
-
-# - task: Kubernetes@1
-#   displayName: 'Install Magento'
-#   inputs:
-#     connectionType: 'Azure Resource Manager'
-#     azureSubscriptionEndpoint: 'Free Trial(1737ad8f-2c51-47d1-80a7-9afe269721c4)'
-#     azureResourceGroup: 'Trial'
-#     kubernetesCluster: 'magento22'
-#     command: 'exec'
-#     arguments: '-i code bash /etc/scripts/install_magento.sh'

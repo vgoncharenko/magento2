@@ -6,6 +6,9 @@ AKS_CLUSTER_NAME='magento22'
 ACR_RESOURCE_GROUP='trial'
 ACR_NAME='gonchare'
 ACR_PUSH_SERVICE_PRINCIPAL_NAME=acr-push
+SUBSCRIPTION_NAME='Free Trial'
+SUBSCRIPTION_ID=$(az account show --subscription "$SUBSCRIPTION_NAME" --query "id" --output tsv)
+TENANT_ID=$(az account show --subscription "$SUBSCRIPTION_NAME" --query "tenantId" --output tsv)
 
 # Create new cluster
 az aks create --name $AKS_CLUSTER_NAME --resource-group trial --disable-rbac --enable-vmss --node-count 1 --generate-ssh-keys --kubernetes-version 1.13.5
@@ -49,3 +52,19 @@ SP_APP_ID=$(az ad sp show --id http://$ACR_PUSH_SERVICE_PRINCIPAL_NAME --query a
 # applications to authenticate to the container registry.
 echo "Service principal ID: $SP_APP_ID"
 echo "Service principal password: $SP_PASSWD"
+
+# Add Open Service Broker for Azure
+helm repo add svc-cat https://svc-catalog-charts.storage.googleapis.com
+helm install svc-cat/catalog --name catalog --namespace catalog --set apiserver.storage.etcd.persistence.enabled=true --set apiserver.healthcheck.enabled=false --set controllerManager.healthcheck.enabled=false --set apiserver.verbosity=2 --set controllerManager.verbosity=2 --wait
+sleep 60
+helm repo add azure https://kubernetescharts.blob.core.windows.net/azure
+helm install azure/open-service-broker-azure --name osba --namespace osba --set azure.subscriptionId=$SUBSCRIPTION_ID --set azure.tenantId=$TENANT_ID --set azure.clientId=$SP_APP_ID --set azure.clientSecret=$SP_PASSWD --set modules.minStability=EXPERIMENTAL
+
+# Create service instances
+kubectl apply -f k8s-config/service-instance.yaml
+sleep 600
+# Restart DNS for lock up of new services
+kubectl delete pods -l k8s-app=kube-dns -n kube-system
+
+# Binding service instances
+kubectl apply -f k8s-config/service-binding.yaml

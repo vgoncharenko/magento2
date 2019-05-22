@@ -52,21 +52,3 @@ spec:
     port: 9200
     targetPort: 9200
   type: LoadBalancer
----
-apiVersion: servicecatalog.k8s.io/v1beta1
-kind: ServiceBinding
-metadata:
-  name: mysql-binding
-spec:
-  instanceRef:
-    name: magento2ee
-  secretName: mysql-secret
----
-apiVersion: servicecatalog.k8s.io/v1beta1
-kind: ServiceBinding
-metadata:
-  name: rediscache-binding
-spec:
-  instanceRef:
-    name: rediscache-instance
-  secretName: rediscache-secret
