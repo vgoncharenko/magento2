@@ -2,12 +2,44 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-replicaCount: 1
+web:
+  replicaCount: 1
+  image:
+    repository: gonchare.azurecr.io
+    name: my-nginx
+    tag: latest
+  volume:
+    mountPath: /magento2ce
+  resources:
+    limits:
+      memory: "256Mi"
+      cpu: "10m"
 
-image:
-  repository: nginx
-  tag: stable
-  pullPolicy: IfNotPresent
+php:
+  replicaCount: 1
+  image:
+    repository: gonchare.azurecr.io
+    name: php
+    tag: 7.2
+  resources:
+    limits:
+      memory: "128Mi"
+      cpu: "10m"
+
+elasticsearch:
+  replicaCount: 1
+  image:
+    repository: docker.elastic.co/elasticsearch
+    name: elasticsearch
+    tag: 6.5.0
+  volume:
+    mountPath: /magento2ce
+  resources:
+    limits:
+      memory: "128Mi"
+      cpu: "10m"
+  env:
+    ES_JAVA_OPTS: "-Xms128m -Xmx128m"
 
 nameOverride: ""
 fullnameOverride: ""

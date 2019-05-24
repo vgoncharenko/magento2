@@ -8,26 +8,25 @@ spec:
   selector:
     matchLabels:
       app: web
+  replicas: {{ .Values.web.replicaCount }}
   template:
     metadata:
       labels:
         app: web
-        role: node1
-        tier: web
     spec:
       initContainers:
       - name: prepare-code
         image: busybox
-        command: ["sh", "-c", "mv /magento2ce/magento.zip /magento.zip && rm -rf /magento2ce/* && tar -xzf /magento.zip -C /magento2ce && rm /magento.zip && chown -R www-data:www-data /magento2ce"]
+        command: ["sh", "-c", "mv {{ .Values.web.volume.mountPath }}/magento.zip /magento.zip && rm -rf {{ .Values.web.volume.mountPath }}/* && tar -xzf /magento.zip -C {{ .Values.web.volume.mountPath }} && rm /magento.zip && chown -R www-data:www-data {{ .Values.web.volume.mountPath }}"]
         securityContext:
           privileged: true
         volumeMounts:
         - name: code
-          mountPath: /magento2ce
+          mountPath: {{ .Values.web.volume.mountPath }}
           readOnly: false
       containers:
       - name: magento2-web
-        image: gonchare.azurecr.io/my-nginx:latest
+        image: {{ .Values.web.image.repository }}/{{ .Values.web.image.name }}:{{ .Values.web.image.tag }}
         securityContext:
           capabilities:
             add:
@@ -37,13 +36,13 @@ spec:
             - NET_BIND_SERVICE
         resources:
           limits:
-            memory: "256Mi"
-            cpu: "10m"
+            memory: {{ .Values.web.resources.limits.memory }}
+            cpu: {{ .Values.web.resources.limits.cpu }}
         ports:
         - containerPort: 8087
         volumeMounts:
         - name: code
-          mountPath: /magento2ce
+          mountPath: {{ .Values.web.volume.mountPath }}
           readOnly: false
         - name: nginx-config
           mountPath: /etc/nginx/conf.d/magento.conf
@@ -69,7 +68,7 @@ spec:
   selector:
     matchLabels:
       app: php
-  replicas: 2
+  replicas: {{ .Values.php.replicaCount }}
   template:
     metadata:
       labels:
@@ -79,7 +78,7 @@ spec:
         fsGroup: 33
       containers:
       - name: magento2-php
-        image: gonchare.azurecr.io/php:7.2
+        image: {{ .Values.php.image.repository }}/{{ .Values.php.image.name }}:{{ .Values.php.image.tag }}
         securityContext:
           privileged: true
           runAsUser: 33
@@ -89,8 +88,8 @@ spec:
             - SYS_RESOURCE
         resources:
           limits:
-            memory: "128Mi"
-            cpu: "10m"
+            memory: {{ .Values.php.resources.limits.memory }}
+            cpu: {{ .Values.php.resources.limits.cpu }}
         env:
         - name: DB_HOST
           valueFrom:
@@ -121,7 +120,7 @@ spec:
         - containerPort: 9000
         volumeMounts:
         - name: code
-          mountPath: /magento2ce
+          mountPath: {{ .Values.web.volume.mountPath }}
           readOnly: false
         - name: install-magento
           mountPath: /etc/scripts/install_magento.sh
@@ -142,7 +141,7 @@ spec:
   selector:
     matchLabels:
       app: es-cluster
-  replicas: 1
+  replicas: {{ .Values.elasticsearch.replicaCount }}
   template:
     metadata:
       labels:
@@ -172,9 +171,7 @@ spec:
           privileged: true
       containers:
       - name: elasticsearch
-        resources:
-          requests:
-            memory: "128Mi"
+        image: {{ .Values.elasticsearch.image.repository }}/{{ .Values.elasticsearch.image.name }}:{{ .Values.elasticsearch.image.tag }}
         securityContext:
           privileged: true
           runAsUser: 1000
@@ -182,10 +179,13 @@ spec:
             add:
             - IPC_LOCK
             - SYS_RESOURCE
-        image: docker.elastic.co/elasticsearch/elasticsearch:6.5.0
         env:
         - name: ES_JAVA_OPTS
-          value: "-Xms128m -Xmx128m"
+          value: {{ .Values.elasticsearch.env.ES_JAVA_OPTS }}
+        resources:
+          requests:
+            memory: {{ .Values.elasticsearch.resources.limits.memory }}
+            cpu: {{ .Values.elasticsearch.resources.limits.cpu }}
         readinessProbe:
           httpGet:
             scheme: HTTP
