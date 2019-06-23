@@ -1,18 +1,3 @@
-# apiVersion: servicecatalog.k8s.io/v1beta1
-# kind: ServiceInstance
-# metadata:
-#   name: mysql-dbms-instance
-# spec:
-#   clusterServiceClassExternalName: azure-mysql-5-7-dbms
-#   clusterServicePlanExternalName: basic
-#   parameters:
-#     location: centralus
-#     resourceGroup: trial
-#     alias: 71b6b6c4-5271-47d3-8188-51e69fba914e
-#     firewallRules:
-#     - startIPAddress: "0.0.0.0"
-#       endIPAddress: "255.255.255.255"
-#       name: "AllowAll"
 apiVersion: servicecatalog.k8s.io/v1beta1
 kind: ServiceInstance
 metadata:
@@ -21,7 +6,6 @@ spec:
   clusterServiceClassExternalName: azure-mysql-5-7
   clusterServicePlanExternalName: basic
   parameters:
-    # parentAlias: 71b6b6c4-5271-47d3-8188-51e69fba914e
     location: centralus
     resourceGroup: trial
     firewallRules:
